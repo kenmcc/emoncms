@@ -1,6 +1,7 @@
 import struct
 import urllib
 import os
+import datetime
 
 fd = os.open("/dev/rfm12b.0.1",  os.O_NONBLOCK|os.O_RDWR)
 localURI="http://192.168.1.31/emoncms/input/post.json?apikey=d959950e0385107e37e2457db27b781e&node="
@@ -11,9 +12,11 @@ while run == True:
   try:
 	data=None
 	jsonStr= ""
+	print "Waiting for data"
 	data = os.read(fd, 66)
 	node, len = struct.unpack("BB", data[:2])
-	print node, len
+	now=datetime.datetime.now().strftime("%d.%m.%Y %H:%M")
+	print now, node, len
 	if node >= 10 and node <= 20:
 		temp,batt = struct.unpack("hh", data[2:])
 		if temp > -2000 and temp < 4000:
