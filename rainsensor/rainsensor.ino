@@ -26,6 +26,11 @@
 #define BUCKETMM 0.3      // How many mm of rain for each bucket tip
 #define reedPin 10        // Reed switch across D10 (ATtiny pin 13) and GND
 
+
+ISR(BADISR_vect)
+{
+    Serial.println("BAD ISR");
+}
 //--------------------------------------------------------------------------------------------------
 //Data Structure to be sent
 //--------------------------------------------------------------------------------------------------
@@ -107,9 +112,6 @@
 void setup() {
   
   Serial.begin(9600);
-
-  Serial.write("Hello World\n");
-
   PRR = bit(PRTIM1); // only keep timer 0 going
   
   ADCSRA &= ~ bit(ADEN); bitSet(PRR, PRADC); // Disable the ADC to save power
@@ -120,31 +122,28 @@ void setup() {
   pinMode(reedPin, INPUT);     // set reed pin as input
   digitalWrite(reedPin, HIGH); // and turn on pullup
   attachPcInterrupt(reedPin,wakeUp,FALLING); // attach a PinChange Interrupt on the falling edge
-  
-  Serial.write("Sleeping\n");
 
+  Serial.println("going to sleep for first time");
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);         // Set sleep mode
   sleep_mode();                                // Sleep now
   
 }
 
-void wakeUp(){}
+void wakeUp(){  
+}
 
 void loop() {
+  Serial.println("loop running");
   
   tinytx.rain = (BUCKETMM * 100); // Send mm per tip as an integer (multiply by 0.01 at receiving end)
 
   tinytx.supplyV = readVcc(); // Get supply voltage
 
-  Serial.write("Sending data\n");
   rfwrite(); // Send data via RF   
  
-  Serial.write("done sending\n");
-
   Sleepy::loseSomeTime(1000); 
   
-  Serial.write("Sleeping again\n");
-
+  Serial.println("Waiting for interrupt ");
   set_sleep_mode(SLEEP_MODE_PWR_DOWN); // Set sleep mode
   sleep_mode(); // Sleep now
   
