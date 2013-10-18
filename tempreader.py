@@ -12,20 +12,19 @@ while run == True:
   	#try:
 	data=None
 	jsonStr= ""
-	print "Waiting for data"
 	data = os.read(fd, 66)
 	node, len = struct.unpack("BB", data[:2])
 	now=datetime.datetime.now().strftime("%d.%m.%Y %H:%M")
-	print now, node, len
-	if node >= 10 and node < 20:
+	#print now, node, len
+	if node == 3:
+          print "rain sensor"
+	  rain,batt = struct.unpack("hh", data[2:])
+	  jsonStr = "rain:"+str(float(rain/100.0))+",batt:"+str(float(batt/1000.0))
+	elif node >= 10 and node < 20:
 		temp,batt = struct.unpack("hh", data[2:])
 		if temp > -2000 and temp < 4000:
 		  print "Got temp, batt = ", temp, batt
       	          jsonStr = "temp:"+str(float(temp/100.0))+",batt:"+str(float(batt/1000.0))
-	elif node == 3:
-	  rain,batt = struct.unpack("hh", data[2:])
-	  print "Got rain, batt = ", rain, batt
-	  jsonStr = "rain:"+str(float(rain/100.0))+",batt:"+str(float(batt/1000.0))
 	elif node == 20: # this is a pressure sensor 
           print "pressure sensor"
 	  temp, batt, pressure = struct.unpack("hhi", data[2:])
@@ -37,9 +36,12 @@ while run == True:
 		
 	if jsonStr != "":
 	  for uri in [localURI, remoteURI]:
-		url = uri+str(node)+"&json={"+jsonStr+"}"
-	  	u = urllib.urlopen(url)
-	        u.read()
+		try:
+		  url = uri+str(node)+"&json={"+jsonStr+"}"
+	  	  u = urllib.urlopen(url)
+	          u.read()
+		except:
+		  print "Failed to connect to ", uri
   	#except:
     	#print "Closing file"
 os.close(fd)
