@@ -86,7 +86,7 @@ def populateCurrentData():
     latestData["wind_avg"] = fields[7] 
     latestData["wind_gust"] = fields[8] 
     latestData["wind_dir"] = fields[9] 
-    latestData["rain"] = fields[10]
+    latestData["rain"] = fields[10].strip().replace("\n", "")
 
 def writeDataToFile():
   Y,M,D=getYearMonthDay()
