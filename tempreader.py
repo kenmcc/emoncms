@@ -49,7 +49,7 @@ def handleTempSensor(node, data=None):
   if validateTemp(temp):
     print "Got temp, batt = ", temp, batt
     jsonStr = "temp:"+str(float(temp/100.0))+",batt:"+str(float(batt/1000.0))
-    return jsonStr,temp
+    return jsonStr,float(temp/100.0)
 
 def handlePressureSensor(node, data):
   temp, batt, pressure = struct.unpack("hhi", data)
@@ -58,7 +58,7 @@ def handlePressureSensor(node, data):
     jsonStr = "temp:"+str(float(temp/10.0))
     jsonStr += ",batt:"+str(float(batt/1000.0))
     jsonStr += ",pressure:"+str(pressure)  
-    return jsonStr,pressure,temp
+    return jsonStr,pressure,float(temp/10.0)
 
 def handleRainGauge(node, data):
   print "rain sensor"
