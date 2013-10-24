@@ -87,14 +87,21 @@ def populateCurrentData():
     latestData["wind_gust"] = fields[8] 
     latestData["wind_dir"] = fields[9] 
     latestData["rain"] = fields[10]
-     
+
+def writeDataToFile():
+  Y,M,D=getYearMonthDay()
+  YM="-".join([str(Y),str(M)])
+  YMD="-".join([YM,str(D)])
+  path=fileBaseDir+"/"+str(Y)+"/"+YM+"/"+YMD+".txt"
+
+  with open(path, "a") as f:
+    dataToWrite = ",".join(latestData)
+    print "would write", dataToWrite
+    f.write(dataToWrite+"\n")        
 
 if __name__=="__main__":
   
   populateCurrentData()  
-  print latestData
-  now=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-  print now
   run=True
 
   while run == True:
@@ -137,6 +144,8 @@ if __name__=="__main__":
       lastruntime = datetime.datetime.strptime(latestData["time"], "%Y-%m-%d %H:%M:%S")
       if nowtime >= lastruntime + timeDelta:
         print "time to update!"
+        latestData["time"] = now
+        writeDataToFile()
       else:
         print "Not time yet", nowtime, lastruntime + timeDelta
       
