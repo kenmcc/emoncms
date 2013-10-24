@@ -74,7 +74,7 @@ def populateCurrentData():
   path=fileBaseDir+"/"+str(Y)+"/"+YM+"/"+YMD+".txt"
   print path
   lastEntry= subprocess.check_output(['tail', '-1', path])
-  if lastEntry is not None:
+  if lastEntry is not None and len(lastEntry) > 10:
     fields=lastEntry.split(",")
     latestData["time"] = fields[0]
     latestData["delay"] = fields[1] 
@@ -98,7 +98,7 @@ if __name__=="__main__":
   run=True
 
   while run == True:
-   try:
+    #try:
     data=None
     jsonStr= ""
     data = os.read(fd, 66)
@@ -111,18 +111,15 @@ if __name__=="__main__":
       if node == 3 and datalen == 4:
         jsonStr,rain = handleRainGauge(node, data[2:])
         latestData["rain"]=rain
-        lastData["time"] = now
         
       elif node >= 10 and node < 20 and datalen == 4:
         jsonStr,temp = handleTempSensor(node, data[2:])
         latestData["temp_in"] = temp
-        lastData["time"] = now
         
       elif node == 20 and datalen == 8: # this is a pressure sensor 
         jsonStr,pressure,outtemp = handlePressureSensor(node, data[2:])
         latestData["pressure"]=pressure
         latestData["temp_out"]=outtemp
-        lastData["time"] = now
       else:
         print "don't know what to do with node, len", node, datalen    
 
@@ -135,12 +132,15 @@ if __name__=="__main__":
             #u.read()
           except:
             print "Failed to connect to ", url
-      
-      lastruntime = datetime.strptime(lastData["time"], "%Y-%m-%d %H:%M:%S")
+
+      print "seeing if i need to do some writing"      
+      lastruntime = datetime.datetime.strptime(latestData["time"], "%Y-%m-%d %H:%M:%S")
       if nowtime >= lastruntime + timeDelta:
         print "time to update!"
+      else:
+        print "Not time yet", nowtime, lastruntime + timeDelta
       
-   except:
-    print "Closing file"
-    os.close(fd)
-    run = False
+    #except:
+    #print "Closing file"
+    #os.close(fd)
+    #run = False
