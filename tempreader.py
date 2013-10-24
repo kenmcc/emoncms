@@ -95,7 +95,7 @@ def writeDataToFile():
   path=fileBaseDir+"/"+str(Y)+"/"+YM+"/"+YMD+".txt"
 
   with open(path, "a") as f:
-    dataToWrite = ",".join([latestData["time"],latestData["delay"],latestData["hum_in"],latestData["temp_in"],latestData["hum_out"],latestData["temp_out"],latestData["pressure"],latestData["wind_avg"],latestData["wind_gust"],latestData["wind_dir"],latestData["rain"]] )
+    dataToWrite = ",".join([str(latestData["time"]),str(latestData["delay"]),str(latestData["hum_in"],str(latestData["temp_in"]),str(latestData["hum_out"]),str(latestData["temp_out"]),str(latestData["pressure"]),str(latestData["wind_avg"]),str(latestData["wind_gust"]),str(latestData["wind_dir"]),str(latestData["rain"])] )
     print "would write", dataToWrite
     f.write(dataToWrite+"\n")        
 
