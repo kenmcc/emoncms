@@ -4,6 +4,8 @@ import os
 import datetime
 import sys
 import subprocess
+from emailer import *
+
 fd = os.open("/dev/rfm12b.0.1",  os.O_NONBLOCK|os.O_RDWR)
 localURI="http://192.168.1.31/emoncms/input/post.json?apikey=d959950e0385107e37e2457db27b781e&node="
 remoteURI="http://emoncms.org/input/post.json?apikey=a6958b2d85dfdfab9406e1e786e38249&node="
@@ -28,12 +30,19 @@ latestData = {
 
 fileBaseDir = "/home/pi/weatherlogger-db/data/raw/"
 
+notifiedLowBatteries = []
+
 def getYearMonthDay():
   Y=datetime.datetime.now().year
   M=datetime.datetime.now().month
   D=datetime.datetime.now().day
   return Y,M,D
 
+
+def checkBattery(node, battV):
+  if battV < 2750 and node not in notifiedLowBatteries:
+    sendEmail("Low Battery Warning", "Battery on node " + node + " is low: " + battV, ken.mccullagh@gmail.com)
+    notifiedLowBatteries.append(node)
 
 def validateTemp(temp):
   if temp > -2000 and temp < 4000:
