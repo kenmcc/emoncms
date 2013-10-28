@@ -9,8 +9,11 @@ localURI="http://192.168.1.31/emoncms/input/post.json?apikey=d959950e0385107e37e
 remoteURI="http://emoncms.org/input/post.json?apikey=a6958b2d85dfdfab9406e1e786e38249&node="
 #goatstownURI="http://goatstownweather.hostoi.com/emoncms/input/post.json?apikey=0f170b829035f4cde06637f953852333&node="
 
+timeDelta = datetime.timedelta(minutes=5)
+
+
 latestData = {
-"time":0, 
+"time":(datetime.datetime.now()-timeDelta).strftime("%Y-%m-%d %H:%M:%S"), 
 "delay":1, 
 "hum_in":50, 
 "temp_in":20, 
@@ -22,7 +25,6 @@ latestData = {
 "wind_dir":0, 
 "rain":0}
 
-timeDelta = datetime.timedelta(minutes=5)
 
 fileBaseDir = "/home/pi/weatherlogger-db/data/raw/"
 
@@ -50,6 +52,9 @@ def handleTempSensor(node, data=None):
     print "Got temp, batt = ", temp, batt
     jsonStr = "temp:"+str(float(temp/100.0))+",batt:"+str(float(batt/1000.0))
     return jsonStr,float(temp/100.0)
+  else:
+    print "Ignoring invalid Temp: ", temp
+  return "",0.0
 
 def handlePressureSensor(node, data):
   temp, batt, pressure = struct.unpack("hhi", data)
@@ -59,6 +64,9 @@ def handlePressureSensor(node, data):
     jsonStr += ",batt:"+str(float(batt/1000.0))
     jsonStr += ",pressure:"+str(pressure)  
     return jsonStr,pressure,float(temp/10.0)
+  else:
+    print "Ignoring invalid temp or pressure", temp, pressure
+  return "", 0, 0.0
 
 def handleRainGauge(node, data):
   print "rain sensor"
@@ -67,26 +75,31 @@ def handleRainGauge(node, data):
   return jsonStr,rain
 
 
+
+
+
 def populateCurrentData():
   Y,M,D=getYearMonthDay()
   YM="-".join([str(Y),str(M)])
   YMD="-".join([YM,str(D)])
-  path=fileBaseDir+"/"+str(Y)+"/"+YM+"/"+YMD+".txt"
-  print path
-  lastEntry= subprocess.check_output(['tail', '-1', path])
-  if lastEntry is not None and len(lastEntry) > 10:
-    fields=lastEntry.split(",")
-    latestData["time"] = fields[0]
-    latestData["delay"] = fields[1] 
-    latestData["hum_in"] = fields[2] 
-    latestData["temp_in"] = fields[3] 
-    latestData["hum_out"] = fields[4] 
-    latestData["temp_out"] = fields[5] 
-    latestData["pressure"] = fields[6] 
-    latestData["wind_avg"] = fields[7] 
-    latestData["wind_gust"] = fields[8] 
-    latestData["wind_dir"] = fields[9] 
-    latestData["rain"] = fields[10].strip().replace("\n", "")
+  path = subprocess.check_output(["find "+fileBaseDir+" -name \"*.txt\" | sort | tail -n 1" ], shell=True)
+  print "Found this as the last entry" , path
+  if os.path.exists(path):
+    lastEntry= subprocess.check_output(['tail', '-1', path])
+    if lastEntry is not None and len(lastEntry) > 10:
+      fields=lastEntry.split(",")
+      if len(fields) == 11:
+        latestData["time"] = fields[0]
+        latestData["delay"] = fields[1] 
+        latestData["hum_in"] = fields[2] 
+        latestData["temp_in"] = fields[3] 
+        latestData["hum_out"] = fields[4] 
+        latestData["temp_out"] = fields[5] 
+        latestData["pressure"] = fields[6] 
+        latestData["wind_avg"] = fields[7] 
+        latestData["wind_gust"] = fields[8] 
+        latestData["wind_dir"] = fields[9] 
+        latestData["rain"] = fields[10].strip().replace("\n", "")
 
 def writeDataToFile():
   Y,M,D=getYearMonthDay()
