@@ -41,7 +41,7 @@ def getYearMonthDay():
 
 def checkBattery(node, battV):
   if battV < 2750 and node not in notifiedLowBatteries:
-    sendEmail("Low Battery Warning", "Battery on node " + node + " is low: " + battV, ken.mccullagh@gmail.com)
+    sendEmail("Low Battery Warning", "Battery on node " + node + " is low: " + battV, "ken.mccullagh@gmail.com")
     notifiedLowBatteries.append(node)
 
 def validateTemp(temp):
@@ -57,6 +57,7 @@ def validatePressure(pressure):
 
 def handleTempSensor(node, data=None):
   temp,batt = struct.unpack("hh", data)
+  checkBattery(node, batt)
   if validateTemp(temp):
     print "Got temp, batt = ", temp, batt
     jsonStr = "temp:"+str(float(temp/100.0))+",batt:"+str(float(batt/1000.0))
@@ -67,6 +68,7 @@ def handleTempSensor(node, data=None):
 
 def handlePressureSensor(node, data):
   temp, batt, pressure = struct.unpack("hhi", data)
+  checkBattery(node, batt)
   if validateTemp(temp) and validatePressure(pressure):
     print "Got temp, battery, pressure = ", temp, batt, pressure
     jsonStr = "temp:"+str(float(temp/10.0))
@@ -80,6 +82,7 @@ def handlePressureSensor(node, data):
 def handleRainGauge(node, data):
   print "rain sensor"
   rain,batt = struct.unpack("hh", data)
+  checkBattery(node, batt)
   jsonStr = "rain:"+str(float(rain/100.0))+",batt:"+str(float(batt/1000.0))
   return jsonStr,rain
 
