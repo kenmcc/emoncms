@@ -20,6 +20,8 @@ ISR(WDT_vect) { Sleepy::watchdogEvent(); } // interrupt handler for JeeLabs Slee
 #define TURN_ON_CODE
 #define TURN_OFF_CODE 
 
+#define TIME_BETWEEN_READINGS 60000
+
 OneWire oneWire(ONE_WIRE_BUS); // Setup a oneWire instance
 DallasTemperature sensors(&oneWire); // Pass our oneWire reference to Dallas Temperature
 RCSwitch mySwitch = RCSwitch();
@@ -123,49 +125,48 @@ void sendRF(int codeToSend)
 volatile int loopCounter = -1;
 void loop() {
   loopCounter++;
-  if (loopCounter%5 != 0)
+  if (loopCounter%5 == 0)
   {
-    return;
-  }
- 
-  int temp = getTemp();
-  
-  if(temp >HIGH_TEMP)
-  {
-      Serial.println("Too HIGH!");
+    int temp = getTemp();
+    
+    if(temp >HIGH_TEMP)
+    {
+        Serial.println("Too HIGH!");
+        Serial.println(temp);
+        sendRF(1298438);
+        doLed(LED, HIGH, 50, LOW, 50, 5);
+    }
+    else if (temp < LOW_TEMP)
+    {
+      Serial.println("Too LOW!");
       Serial.println(temp);
-      sendRF(1298438);
-      doLed(LED, HIGH, 50, LOW, 50, 5);
-  }
-  else if (temp < LOW_TEMP)
-  {
-    Serial.println("Too LOW!");
-    Serial.println(temp);
-    sendRF(1298439);
-    doLed(LED, HIGH, 200, LOW, 200, 3);
-  }
-  else
-  {
-    Serial.println("Just Right!");
-    Serial.println(temp);
-    doLed(LED, HIGH, 100, LOW,100,1);
+      sendRF(1298439);
+      doLed(LED, HIGH, 200, LOW, 200, 3);
+    }
+    else
+    {
+      Serial.println("Just Right!");
+      Serial.println(temp);
+      doLed(LED, HIGH, 100, LOW,100,1);
+    }
+    
+    /* let the thing settle a wee bit */
+    Sleepy::loseSomeTime(2000);
+    /* check the battery and do a battery signal */
+    long battery = readVcc();
+    if(battery < 2750)
+    {
+      Serial.println("Low Battery!");
+      Serial.println(battery);
+      doLed(LED, HIGH, 100,LOW,100,3); /* S O S */ // ...
+      doLed(LED, HIGH, 300,LOW,300,3);             // ---
+      doLed(LED, HIGH, 100,LOW,100,3);             // ...
+    }
+    loopCounter = 0;
   }
   
-  /* let the thing settle a wee bit */
-  Sleepy::loseSomeTime(2000);
-  /* check the battery and do a battery signal */
-  long battery = readVcc();
-  if(battery < 2750)
-  {
-    Serial.println("Low Battery!");
-    Serial.println(battery);
-    doLed(LED, HIGH, 100,LOW,100,3); /* S O S */ // ...
-    doLed(LED, HIGH, 300,LOW,300,3);             // ---
-    doLed(LED, HIGH, 100,LOW,100,3);             // ...
-  }
-
   /* and then head off to sleep */
-  Sleepy::loseSomeTime(60000);
+  Sleepy::loseSomeTime(TIME_BETWEEN_READINGS);
 
 }
 
