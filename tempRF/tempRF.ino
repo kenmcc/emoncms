@@ -9,10 +9,10 @@ ISR(WDT_vect) { Sleepy::watchdogEvent(); } // interrupt handler for JeeLabs Slee
 #define ONE_WIRE_BUS 10   // DS18B20 Temperature sensor is connected on D10/ATtiny pin 13
 #define ONE_WIRE_POWER 9  // DS18B20 Power pin is connected on D9/ATtiny pin 12
 
-#define TX_POWER 8
-#define TX_DATA 7
+#define TX_POWER 8    // the Tx Power is on pin 8
+#define TX_DATA 7     // and the data is on pin 7
 
-#define LED 3
+#define LED 3         // le pin 3
 
 #define HIGH_TEMP 18
 #define LOW_TEMP 16
@@ -109,6 +109,17 @@ int getTemp()
   return temp;
 }
 
+void sendRF(int codeToSend)
+{
+  digitalWrite(TX_POWER, HIGH);
+  Sleepy::loseSomeTime(100);
+  Serial.print("Sending Code ");
+  Serial.print(codeToSend);
+  Serial.print("\n");
+  mySwitch.send(codeToSend, 24);
+  digitalWrite(TX_POWER, LOW);
+}
+
 volatile int loopCounter = -1;
 void loop() {
   loopCounter++;
@@ -123,14 +134,14 @@ void loop() {
   {
       Serial.println("Too HIGH!");
       Serial.println(temp);
-      mySwitch.send(1298438, 24);
+      sendRF(1298438);
       doLed(LED, HIGH, 50, LOW, 50, 5);
   }
   else if (temp < LOW_TEMP)
   {
     Serial.println("Too LOW!");
     Serial.println(temp);
-    mySwitch.send(1298439, 24);
+    sendRF(1298439);
     doLed(LED, HIGH, 200, LOW, 200, 3);
   }
   else
