@@ -179,6 +179,8 @@ if __name__=="__main__":
           sensorName = SENSORS[node][0]
           sensorFunc = SENSORS[node][1]
           processed_data = sensorFunc(sensorName, sensorNode).handleData(payload)
+          if processed_data["Temp"] is not None:
+              latestData["temp_in_sensors"][node] = processed_data["Temp"]
            
         
       else:
