@@ -42,13 +42,16 @@ class RainSensor(Sensor):
 
 class TempSensor(Sensor):
     def __init__(self, name, nodeId = None):
-        super(TempSensor, self).__init__(name)
+        self.nodeId = nodeId
+	super(TempSensor, self).__init__(name)
         
     def handleData(self, data):
         temp,batt = unpack("hh", data[0:4])
         checkBattery(self.nodeId, batt)
         if validateTemp(temp) != True:
             temp = None
+        else:
+	    temp = float(temp)/100.0
         return {"Node":self.name,"Temp":temp, "Battery":batt}
         
     

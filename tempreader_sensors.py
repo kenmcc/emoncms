@@ -9,7 +9,7 @@ from Sensor import *
 
 fd = os.open("/dev/rfm12b.0.1",  os.O_NONBLOCK|os.O_RDWR)
 
-timeDelta = datetime.timedelta(minutes=5)
+timeDelta = datetime.timedelta(minutes=1)
 
 SENSORS = { 1:["COLLECTOR",None], 
             #2:["WS:PTHum",HumiditySensor],
@@ -157,7 +157,7 @@ if __name__=="__main__":
       payload = data[2:]
       nowtime = datetime.datetime.now()
       now= nowtime.strftime("%Y-%m-%d %H:%M:%S")
-      print now
+      print now, "Node = ", node
       #print now, node, len
       if node == 3 and datalen == 4:
         jsonStr,rain = handleRainGauge(node, data[2:])
@@ -178,10 +178,10 @@ if __name__=="__main__":
       elif node == 21 and datalen == 5:
           sensorName = SENSORS[node][0]
           sensorFunc = SENSORS[node][1]
-          processed_data = sensorFunc(sensorName, sensorNode).handleData(payload)
+          processed_data = sensorFunc(sensorName, node).handleData(payload)
           if processed_data["Temp"] is not None:
               latestData["temp_in_sensors"][node] = processed_data["Temp"]
-           
+              print processed_data
         
       else:
         print "don't know what to do with node, len", node, datalen    
@@ -202,7 +202,8 @@ if __name__=="__main__":
         print "time to update!"
         latestData["time"] = now
         if len(latestData["temp_in_sensors"]) > 0:
-            latestData["temp_in_avg"] = float(sum(latestData["temp_in_sensors"]))/len(latestData["temp_in_sensors"])  
+	    print latestData["temp_in_sensors"]
+            latestData["temp_in_avg"] = float(sum(latestData["temp_in_sensors"].values()))/len(latestData["temp_in_sensors"])  
         writeDataToFile()
       
     #except:
