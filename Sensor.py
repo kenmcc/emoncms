@@ -1,4 +1,15 @@
 from struct import *
+
+def checkBattery(node, battV):
+  if battV < 2750 and node not in notifiedLowBatteries:
+    sendEmail("Low Battery Warning", "Battery on node " + node + " is low: " + battV, "ken.mccullagh@gmail.com")
+    notifiedLowBatteries.append(node)
+
+def validateTemp(temp):
+  if temp > -2000 and temp < 4000:
+    return True
+  return False
+
 class Sensor(object):
     def __init__(self, name):
         self.name = name
@@ -17,6 +28,7 @@ class HumiditySensor(Sensor):
     
     def handleData(self, data):
         humidity, batt = unpack("hh", data[0:4])
+        checkBattery(self.nodeId, batt)
         return {"Node":self.name,"Humidity":humidity, "Battery":batt}
 
 class RainSensor(Sensor):
@@ -25,6 +37,7 @@ class RainSensor(Sensor):
     
     def handleData(self, data):
         rain,batt = unpack("hh", data[0:4])
+        checkBattery(self.nodeId, batt)
         return {"Node":self.name, "Rain":rain, "Battery":batt}    
 
 class TempSensor(Sensor):
@@ -33,6 +46,9 @@ class TempSensor(Sensor):
         
     def handleData(self, data):
         temp,batt = unpack("hh", data[0:4])
+        checkBattery(self.nodeId, batt)
+        if validateTemp(temp) != True:
+            temp = None
         return {"Node":self.name,"Temp":temp, "Battery":batt}
         
     
