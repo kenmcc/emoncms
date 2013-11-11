@@ -11,8 +11,9 @@ def validateTemp(temp):
   return False
 
 class Sensor(object):
-    def __init__(self, name):
+    def __init__(self, name, nodeId = None):
         self.name = name
+	self.nodeId = nodeId
        
     def handleData(self, data):
         return None
@@ -24,12 +25,27 @@ class UnKnown(Sensor):
 
 class HumiditySensor(Sensor):
     def __init__(self, name, nodeId = None):
-        super(HumiditySensor, self).__init__(name)
+        super(HumiditySensor, self).__init__(name, nodeId)
     
     def handleData(self, data):
         humidity, batt = unpack("hh", data[0:4])
         checkBattery(self.nodeId, batt)
         return {"Node":self.name,"Humidity":humidity, "Battery":batt}
+
+class PressureSensor(Sensor):
+    def __init__(self, name, nodeId = None):
+        super(PressureSensor, self).__init__(name)
+    
+    def handleData(self, data):
+        temp, batt, pressure, humidity = unpack("hhii", data[0:12])
+        checkBattery(self.nodeId, batt)
+        if validateTemp(temp) != True:
+            temp = None
+        else:
+	    temp = float(temp)/10.0
+	humidity = float(humidity)/100.0
+        return {"Node":self.name,"Pressure":pressure, "Humidity":humidity,"Temp":temp, "Battery":batt}
+
 
 class RainSensor(Sensor):
     def __init__(self, name, nodeId = None):

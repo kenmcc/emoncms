@@ -12,7 +12,7 @@ fd = os.open("/dev/rfm12b.0.1",  os.O_NONBLOCK|os.O_RDWR)
 timeDelta = datetime.timedelta(minutes=1)
 
 SENSORS = { 1:["COLLECTOR",None], 
-            #2:["WS:PTHum",HumiditySensor],
+            2:["WS:PTHum",PressureSensor],
             #3:["WS:WindRain",RainSensor],
             10:["Kitchen", TempSensor],
             #11:["SittingRoom", TempSensor],
@@ -167,11 +167,18 @@ if __name__=="__main__":
         jsonStr,temp = handleTempSensor(node, data[2:])
         latestData["temp_in_sensors"][node] = temp
         
-      elif node == 20 and datalen == 8: # this is a pressure sensor 
-        jsonStr,pressure,outtemp = handlePressureSensor(node, data[2:])
-        latestData["pressure"]=pressure
-        latestData["temp_out"]=outtemp
+      elif node == 2 and datalen == 12: # this is a pressure sensor 
+        #jsonStr,pressure,outtemp = handlePressureSensor(node, data[2:])
+        #latestData["pressure"]=pressure
+        #latestData["temp_out"]=outtemp
+        sensorName = SENSORS[node][0]
+        sensorFunc = SENSORS[node][1]
+        processed_data = sensorFunc(sensorName, node).handleData(payload)
+        print processed_data
+        if processed_data["Temp"] is not None:
+           latestData["temp_out"] = processed_data["Temp"]
       
+
       #elif node == 21 and datalen == 5: # this is a Temperature Control Switch 
       #  jsonStr,temp, switchState = handleTempSensorSwitcher(node, data[2:])
       #  latestData["temp_in_sensors"][node] = temp
