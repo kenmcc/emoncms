@@ -27,7 +27,7 @@ ISR(WDT_vect) { Sleepy::watchdogEvent(); } // interrupt handler for JeeLabs Slee
   #define LOW_TEMP 22
 #endif
 
-#define myNodeID 30        // RF12 node ID in the range 1-30
+#define myNodeID 21        // RF12 node ID in the range 1-30
 #define network 99       // RF12 Network group
 #define freq RF12_433MHZ  // Frequency of RFM12B module
 
@@ -136,7 +136,7 @@ void setup() {
   //Serial.begin(9600);
 #if defined(__AVR_ATtiny84__)
   rf12_initialize(myNodeID,freq,network); // Initialize RFM12 with settings defined above 
-  rf12_sleep(0);                          // Put the RFM12 to sleep
+  //rf12_sleep(0);                          // Put the RFM12 to sleep
 #else
   Serial.begin(9600);
 #endif
@@ -160,28 +160,28 @@ void setup() {
 
 }
 
-volatile int loopCounter = -1;
+//volatile int loopCounter = -1;
 void loop() {
-  loopCounter++;
-  if (loopCounter%LOOP_COUNTER == 0)
+//  loopCounter++;
+  //if (loopCounter%LOOP_COUNTER == 0)
   {
     tinytx.temp = getTemp();
     if(tinytx.temp > HIGH_TEMP*100)
     {
-      ledOn(200);
+   //   ledOn(200);
       sendRF(SWITCH_OFF);
       tinytx.switchValue = SWITCH_OFF;
     }
     else if (tinytx.temp < LOW_TEMP*100)
     {
-      ledOn(500);
+     // ledOn(500);
       sendRF(SWITCH_ON);
       tinytx.switchValue = SWITCH_ON;    
     }
     else
     {
       tinytx.switchValue = SWITCH_NO_CHANGE;
-      ledOn(50);
+      //ledOn(50);
     }
 
     /* let the thing settle a wee bit */
@@ -190,7 +190,7 @@ void loop() {
     tinytx.supplyV = readVcc();
     
     rfwrite();
-    loopCounter = 0;
+ //   loopCounter = 0;
     
   }
 
