@@ -36,6 +36,8 @@ BMP085 psensor (i2c, 3); // ultra high resolution
 #define DHTDATA 3
 #define DHTTYPE DHT11
 
+#define LED_PIN 0
+
 DHT dht(DHTDATA, DHTTYPE);
 
 //########################################################################################################################
@@ -43,10 +45,10 @@ DHT dht(DHTDATA, DHTTYPE);
 //########################################################################################################################
 
  typedef struct {
-  	  int16_t temp;	// Temperature reading
+  	  int temp;	// Temperature reading
   	  int supplyV;	// Supply voltage
-    	  int32_t pres;	// Pressure reading
-          int32_t humidity;
+    	  long int pres;	// Pressure reading
+          long int humidity;
  } Payload;
 
  Payload tinytx;
@@ -88,9 +90,10 @@ long readVcc() {
 //########################################################################################################################
 
 void setup() {
-
+  Serial.begin(9600);
   pinMode(BMP085_POWER, OUTPUT); // set power pin for BMP085 to output
   pinMode(DHTPOWER, OUTPUT); // set power pin for BMP085 to output
+  pinMode(LED_PIN, OUTPUT); // set power pin for BMP085 to output
   
   digitalWrite(BMP085_POWER, HIGH); // turn BMP085 sensor on
   
@@ -98,6 +101,8 @@ void setup() {
   psensor.getCalibData();
 
   digitalWrite(BMP085_POWER, LOW); // turn BMP085 sensor on
+  digitalWrite(DHTPOWER, LOW);
+  digitalWrite(LED_PIN, LOW); 
   
   rf12_initialize(myNodeID,freq,network); // Initialize RFM12 with settings defined above 
   rf12_sleep(0);                          // Put the RFM12 to sleep
@@ -106,38 +111,92 @@ void setup() {
   
   ADCSRA &= ~ bit(ADEN); bitSet(PRR, PRADC); // Disable the ADC to save power
 }
+int lastPressureRead = 0;
+int lastTempRead = 0;
+float lastHumidityRead = 0;
 
 void loop() {
 
+  digitalWrite(LED_PIN, HIGH);
+  int sleepTimer = millis() + 60000; 
+  boolean again = false;
   digitalWrite(BMP085_POWER, HIGH); // turn BMP085 sensor on
   digitalWrite(DHTPOWER, HIGH);
   Sleepy::loseSomeTime(2000);
 
   dht.begin();
   
-  // Get raw temperature reading
-  psensor.startMeas(BMP085::TEMP);
-  Sleepy::loseSomeTime(16);
-  int32_t traw = psensor.getResult(BMP085::TEMP);
-
-  // Get raw pressure reading
-  psensor.startMeas(BMP085::PRES);
-  Sleepy::loseSomeTime(32);
-  int32_t praw = psensor.getResult(BMP085::PRES);
-
-  // Calculate actual temperature and pressure
-  int32_t press;
-  psensor.calculate(tinytx.temp, press);
-  tinytx.pres = (press * 0.01);
-
+  do
+  {
+    again = false;
+    // Get raw temperature reading
+    psensor.startMeas(BMP085::TEMP);
+    Sleepy::loseSomeTime(16);
+    int32_t traw = psensor.getResult(BMP085::TEMP);
+  
+    // Get raw pressure reading
+    psensor.startMeas(BMP085::PRES);
+    Sleepy::loseSomeTime(32);
+    int32_t praw = psensor.getResult(BMP085::PRES);
+  
+    // Calculate actual temperature and pressure
+    int32_t press;
+    int16_t thetemp;
+    psensor.calculate(thetemp, press);
+    tinytx.pres = (press * 0.01);
+    tinytx.temp = thetemp * 100;
+  
+    if(tinytx.pres < lastPressureRead-1)
+    {
+      again = true;
+    }
+    else if (tinytx.pres > lastPressureRead + 1)
+    {
+      again = true;
+    }
+    else if(tinytx.temp < lastTempRead -1)
+    {
+      again = true;
+    }
+    else if(tinytx.temp > lastTempRead +1)
+    {
+      again = true;
+    }
+    lastTempRead = tinytx.temp;
+    lastPressureRead = tinytx.pres;
+    
+  }while(again);
+  float f;
+  do
+  {
+    again = false;
+    f = dht.readHumidity();
+    if (f == NAN)
+    {
+      again = true;
+    }
+    else if (f < lastHumidityRead - 1)
+    {
+      again = true;
+    }
+    else if (f > lastHumidityRead + 1)
+    {
+      again = true;
+    }
+    else
+    {
+      tinytx.humidity = (int)(f * 100);
+    }
+    lastHumidityRead = f;
+  }while(again);
   tinytx.supplyV = readVcc(); // Get supply voltage
 
   rfwrite(); // Send data via RF 
 
-  digitalWrite(BMP085_POWER, LOW); // turn BMP085 sensor on
-  digitalWrite(DHTPOWER, LOW);
-
-  Sleepy::loseSomeTime(60000); //JeeLabs power save function: enter low power mode for 60 seconds (valid range 16-65000 ms)
-
+  digitalWrite(BMP085_POWER, LOW); // turn BMP085 sensor off
+  digitalWrite(DHTPOWER, LOW);     // turn DHT11 off
+  digitalWrite(LED_PIN, LOW);
+  
+  Sleepy::loseSomeTime(sleepTimer - millis()); //JeeLabs power save function: enter low power mode for 60 seconds (valid range 16-65000 ms)
 }
 
