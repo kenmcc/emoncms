@@ -187,7 +187,10 @@ void loop() {
     {
       tinytx.humidity = (int)(f * 100);
     }
-    lastHumidityRead = f;
+    if (f != NAN)
+    {
+      lastHumidityRead = f;
+    }
   }while(again);
   tinytx.supplyV = readVcc(); // Get supply voltage
 
