@@ -164,7 +164,10 @@ if __name__=="__main__":
           if node in SENSORS:
               sensorName = SENSORS[node][0]
               sensorFunc = SENSORS[node][1]
-              processed_data = sensorFunc(sensorName, node).handleData(payload, latestData)
+	      print "Before", latestData
+              latestData = sensorFunc(sensorName, node).handleData(payload, latestData)
+      	      print "after", latestData
+
           else:
               print "don't know what to do with node, len", node, datalen
           '''    

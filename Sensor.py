@@ -22,7 +22,7 @@ class Sensor(object):
         self.nodeId = nodeId
        
     def handleData(self, payload, storedData = None):
-        return None
+        return storedData
         
     def printData(self, data):
         print "Node:{0};{1}".format(self.nodeId, self.name), data 
@@ -50,14 +50,15 @@ class PressureHumiditySensor(Sensor):
             temp, batt, pressure, humidity = unpack("hhii", payload[0:12])
             self.printData({"Temp":temp, "Battery":batt, "Pressure": pressure, "Humidity":humidity})
             checkBattery(self.nodeId, batt)
-            if validateTemp(temp) == True and validatePressure(pressure) == True:
-                temp = float(temp)/10.0
+            if validateTemp(temp/10) == True and validatePressure(pressure) == True:
+                temp = float(temp)/1000
                 humidity = float(humidity)/100.0
                 if storedData is not None:
+                    print "Storing data"
                     storedData["pressure"] = pressure
                     storedData["hum_out"] = humidity
                     storedData["temp_out"] = temp
-                    
+            return storedData
 
 
 class RainSensor(Sensor):
@@ -85,7 +86,7 @@ class TempSensor(Sensor):
                 temp = float(temp)/100.0
                 if storedData is not None:
                     storedData["temp_in_sensors"][self.nodeId] = temp           
-        
+            return storedData
 
 '''
     this is a special class of temperature sensor, which also can send an RF command
@@ -97,9 +98,9 @@ class TempSwitchSensor(TempSensor):
         
     def handleData(self, payload, storedData = None):
         #if len(payload) == 5:
-            tempdata = super(TempSwitchSensor, self).handleData(payload[0:4], storedData)
+            storedData = super(TempSwitchSensor, self).handleData(payload[0:4], storedData)
             if storedData is not None:
                    storedData["Switchstate"] = unpack("B", payload[4])[0]
-            
+            return storedData
         
         
