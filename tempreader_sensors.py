@@ -12,7 +12,7 @@ fd = os.open("/dev/rfm12b.0.1",  os.O_NONBLOCK|os.O_RDWR)
 timeDelta = datetime.timedelta(minutes=1)
 
 SENSORS = { 1:["COLLECTOR",None], 
-            2:["WS:PTHum",PressureSensor],
+            2:["WS:PTHum",PressureHumiditySensor],
             #3:["WS:WindRain",RainSensor],
             10:["Kitchen", TempSensor],
             #11:["SittingRoom", TempSensor],
@@ -45,7 +45,7 @@ def getYearMonthDay():
   D=datetime.datetime.now().day
   return Y,M,D
 
-
+'''
 def checkBattery(node, battV):
   if battV < 2750 and node not in notifiedLowBatteries:
     sendEmail("Low Battery Warning", "Battery on node " + node + " is low: " + battV, "ken.mccullagh@gmail.com")
@@ -60,8 +60,8 @@ def validatePressure(pressure):
   if pressure > 900 and pressure < 1100:
     return True
   return False
-
-
+'''
+'''
 def handleTempSensor(node, data=None):
   temp,batt = struct.unpack("hh", data)
   checkBattery(node, batt)
@@ -72,8 +72,9 @@ def handleTempSensor(node, data=None):
   else:
     print "Ignoring invalid Temp: ", temp
   return "",0.0
-  
+'''  
 
+'''
 def handleTempSensorSwitcher(node, data=None):
   temp,batt,switchState = struct.unpack("hhB", data)
   checkBattery(node, batt)
@@ -84,8 +85,9 @@ def handleTempSensorSwitcher(node, data=None):
   else:
     print "Ignoring invalid Temp: ", temp
   return "",0.0, -1
+'''
 
-
+'''
 def handlePressureSensor(node, data):
   temp, batt, pressure = struct.unpack("hhi", data)
   checkBattery(node, batt)
@@ -98,14 +100,15 @@ def handlePressureSensor(node, data):
   else:
     print "Ignoring invalid temp or pressure", temp, pressure
   return "", 0, 0.0
-
+'''
+'''
 def handleRainGauge(node, data):
   print "rain sensor"
   rain,batt = struct.unpack("hh", data)
   checkBattery(node, batt)
   jsonStr = "rain:"+str(float(rain/100.0))+",batt:"+str(float(batt/1000.0))
   return jsonStr,rain
-
+'''
 
 
 
@@ -148,60 +151,53 @@ if __name__=="__main__":
   populateCurrentData()  
   run=True
   while run == True:
-    #try:
-    data=None
-    jsonStr= ""
-    data = os.read(fd, 66)
-    if data is not None and len(data) > 2:
-      node, datalen = struct.unpack("BB", data[:2])
-      payload = data[2:]
-      nowtime = datetime.datetime.now()
-      now= nowtime.strftime("%Y-%m-%d %H:%M:%S")
-      print now, "Node = ", node
-      #print now, node, len
-      if node == 3 and datalen == 4:
-        jsonStr,rain = handleRainGauge(node, data[2:])
-        latestData["rain"]=rain
+      #try:
+      data=None
+      jsonStr= ""
+      data = os.read(fd, 66)
+      if data is not None and len(data) > 2:
+          node, datalen = struct.unpack("BB", data[:2])
+          payload = data[2:]
+          nowtime = datetime.datetime.now()
+          now= nowtime.strftime("%Y-%m-%d %H:%M:%S")
+          print "Node = ", node
+          if node in SENSORS:
+              sensorName = SENSORS[node][0]
+              sensorFunc = SENSORS[node][1]
+              processed_data = sensorFunc(sensorName, node).handleData(payload, latestData)
+          else:
+              print "don't know what to do with node, len", node, datalen
+          '''    
+          #print now, node, len
+          elif if node == 3 and datalen == 4:
+              jsonStr,rain = handleRainGauge(node, data[2:])
+              latestData["rain"]=rain
         
-      elif node >= 10 and node < 20 and datalen == 4:
-        jsonStr,temp = handleTempSensor(node, data[2:])
-        latestData["temp_in_sensors"][node] = temp
+          elif node >= 10 and node < 20 and datalen == 4:
+              jsonStr,temp = handleTempSensor(node, data[2:])
+              latestData["temp_in_sensors"][node] = temp
         
-      elif node == 2 and datalen == 12: # this is a pressure sensor 
-        #jsonStr,pressure,outtemp = handlePressureSensor(node, data[2:])
-        #latestData["pressure"]=pressure
-        #latestData["temp_out"]=outtemp
-        sensorName = SENSORS[node][0]
-        sensorFunc = SENSORS[node][1]
-        processed_data = sensorFunc(sensorName, node).handleData(payload)
-        print processed_data
-        if processed_data["Temp"] is not None:
-           latestData["temp_out"] = processed_data["Temp"]
-      
-
-      #elif node == 21 and datalen == 5: # this is a Temperature Control Switch 
-      #  jsonStr,temp, switchState = handleTempSensorSwitcher(node, data[2:])
-      #  latestData["temp_in_sensors"][node] = temp
-      elif node == 21 and datalen == 5:
-          sensorName = SENSORS[node][0]
-          sensorFunc = SENSORS[node][1]
-          processed_data = sensorFunc(sensorName, node).handleData(payload)
-          if processed_data["Temp"] is not None:
-              latestData["temp_in_sensors"][node] = processed_data["Temp"]
+          elif node == 2 and datalen == 12: # this is a pressure sensor 
+              #jsonStr,pressure,outtemp = handlePressureSensor(node, data[2:])
+              #latestData["pressure"]=pressure
+              #latestData["temp_out"]=outtemp
+              sensorName = SENSORS[node][0]
+              sensorFunc = SENSORS[node][1]
+              processed_data = sensorFunc(sensorName, node).handleData(payload)
               print processed_data
-        
-      else:
-        print "don't know what to do with node, len", node, datalen    
-
-      #if jsonStr != "":
-      #  for uri in [remoteURI]:
-      #    url=""
-      #    try:
-      #      url = uri+str(node)+"&json={"+jsonStr+"}"
-      #      u = urllib.urlopen(url)
-      #      #u.read()
-      #    except:
-      #      print "Failed to connect to ", url
+              if processed_data["Temp"] is not None:
+                  latestData["temp_out"] = processed_data["Temp"]
+      
+          elif node == 21 and datalen == 5:
+              sensorName = SENSORS[node][0]
+              sensorFunc = SENSORS[node][1]
+              processed_data = sensorFunc(sensorName, node).handleData(payload)
+              if processed_data["Temp"] is not None:
+                  latestData["temp_in_sensors"][node] = processed_data["Temp"]
+              print processed_data
+          '''
+          
+              
 
       print "seeing if i need to do some writing"      
       lastruntime = datetime.datetime.strptime(latestData["time"], "%Y-%m-%d %H:%M:%S")
@@ -209,7 +205,7 @@ if __name__=="__main__":
         print "time to update!"
         latestData["time"] = now
         if len(latestData["temp_in_sensors"]) > 0:
-	    print latestData["temp_in_sensors"]
+            print latestData["temp_in_sensors"]
             latestData["temp_in_avg"] = float(sum(latestData["temp_in_sensors"].values()))/len(latestData["temp_in_sensors"])  
         writeDataToFile()
       
