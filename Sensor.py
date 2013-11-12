@@ -1,5 +1,5 @@
 from struct import *
-
+notifiedLowBatteries = []
 def checkBattery(node, battV):
   if battV < 2750 and node not in notifiedLowBatteries:
     sendEmail("Low Battery Warning", "Battery on node " + node + " is low: " + battV, "ken.mccullagh@gmail.com")
@@ -48,13 +48,12 @@ class PressureHumiditySensor(Sensor):
     def handleData(self, payload, storedData = None):
         #if len(payload) == 12:
             temp, batt, pressure, humidity = unpack("hhii", payload[0:12])
-            self.printData({"Temp":temp, "Battery":batt, "Pressure": pressure, "Humidity":humidity})
+            #self.printData({"Temp":temp, "Battery":batt, "Pressure": pressure, "Humidity":humidity})
             checkBattery(self.nodeId, batt)
             if validateTemp(temp/10) == True and validatePressure(pressure) == True:
                 temp = float(temp)/1000
                 humidity = float(humidity)/100.0
                 if storedData is not None:
-                    print "Storing data"
                     storedData["pressure"] = pressure
                     storedData["hum_out"] = humidity
                     storedData["temp_out"] = temp
