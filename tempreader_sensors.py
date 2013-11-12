@@ -45,73 +45,6 @@ def getYearMonthDay():
   D=datetime.datetime.now().day
   return Y,M,D
 
-'''
-def checkBattery(node, battV):
-  if battV < 2750 and node not in notifiedLowBatteries:
-    sendEmail("Low Battery Warning", "Battery on node " + node + " is low: " + battV, "ken.mccullagh@gmail.com")
-    notifiedLowBatteries.append(node)
-
-def validateTemp(temp):
-  if temp > -2000 and temp < 4000:
-    return True
-  return False
-
-def validatePressure(pressure):
-  if pressure > 900 and pressure < 1100:
-    return True
-  return False
-'''
-'''
-def handleTempSensor(node, data=None):
-  temp,batt = struct.unpack("hh", data)
-  checkBattery(node, batt)
-  if validateTemp(temp):
-    print "Got temp, batt = ", temp, batt
-    jsonStr = "temp:"+str(float(temp/100.0))+",batt:"+str(float(batt/1000.0))
-    return jsonStr,float(temp/100.0)
-  else:
-    print "Ignoring invalid Temp: ", temp
-  return "",0.0
-'''  
-
-'''
-def handleTempSensorSwitcher(node, data=None):
-  temp,batt,switchState = struct.unpack("hhB", data)
-  checkBattery(node, batt)
-  if validateTemp(temp):
-    print "Got temp, batt, switch = ", temp, batt, switch
-    jsonStr = "temp:"+str(float(temp/100.0))+",batt:"+str(float(batt/1000.0))
-    return jsonStr,float(temp/100.0), switchState
-  else:
-    print "Ignoring invalid Temp: ", temp
-  return "",0.0, -1
-'''
-
-'''
-def handlePressureSensor(node, data):
-  temp, batt, pressure = struct.unpack("hhi", data)
-  checkBattery(node, batt)
-  if validateTemp(temp) and validatePressure(pressure):
-    print "Got temp, battery, pressure = ", temp, batt, pressure
-    jsonStr = "temp:"+str(float(temp/10.0))
-    jsonStr += ",batt:"+str(float(batt/1000.0))
-    jsonStr += ",pressure:"+str(pressure)  
-    return jsonStr,pressure,float(temp/10.0)
-  else:
-    print "Ignoring invalid temp or pressure", temp, pressure
-  return "", 0, 0.0
-'''
-'''
-def handleRainGauge(node, data):
-  print "rain sensor"
-  rain,batt = struct.unpack("hh", data)
-  checkBattery(node, batt)
-  jsonStr = "rain:"+str(float(rain/100.0))+",batt:"+str(float(batt/1000.0))
-  return jsonStr,rain
-'''
-
-
-
 
 def populateCurrentData():
   Y,M,D=getYearMonthDay()
@@ -144,7 +77,7 @@ def writeDataToFile():
 
   with open(path, "a") as f:
     dataToWrite = ",".join([str(latestData["time"]),str(latestData["delay"]),str(latestData["hum_in"]),str(latestData["temp_in_avg"]),str(latestData["hum_out"]),str(latestData["temp_out"]),str(latestData["pressure"]),str(latestData["wind_avg"]),str(latestData["wind_gust"]),str(latestData["wind_dir"]),str(latestData["rain"])] )
-    print "would write", dataToWrite
+    print "writing", dataToWrite
     f.write(dataToWrite+"\n")        
 
 if __name__=="__main__":
@@ -164,9 +97,7 @@ if __name__=="__main__":
           if node in SENSORS:
               sensorName = SENSORS[node][0]
               sensorFunc = SENSORS[node][1]
-	      print "Before", latestData
               latestData = sensorFunc(sensorName, node).handleData(payload, latestData)
-      	      print "after", latestData
 
           else:
               print "don't know what to do with node, len", node, datalen
@@ -202,13 +133,11 @@ if __name__=="__main__":
           
               
 
-      print "seeing if i need to do some writing"      
       lastruntime = datetime.datetime.strptime(latestData["time"], "%Y-%m-%d %H:%M:%S")
       if nowtime >= lastruntime + timeDelta:
         print "time to update!"
         latestData["time"] = now
         if len(latestData["temp_in_sensors"]) > 0:
-            print latestData["temp_in_sensors"]
             latestData["temp_in_avg"] = float(sum(latestData["temp_in_sensors"].values()))/len(latestData["temp_in_sensors"])  
         writeDataToFile()
       
