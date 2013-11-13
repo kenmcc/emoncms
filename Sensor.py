@@ -48,11 +48,13 @@ class PressureHumiditySensor(Sensor):
     def handleData(self, payload, storedData = None):
         #if len(payload) == 12:
             temp, batt, pressure, humidity = unpack("hhii", payload[0:12])
-            #self.printData({"Temp":temp, "Battery":batt, "Pressure": pressure, "Humidity":humidity})
+            self.printData({"Temp":temp, "Battery":batt, "Pressure": pressure, "Humidity":humidity})
             checkBattery(self.nodeId, batt)
             if validateTemp(temp/10) == True and validatePressure(pressure) == True:
                 temp = float(temp)/1000
                 humidity = float(humidity)/100.0
+                if humidity < 1:
+                   humidity = 1
                 if storedData is not None:
                     storedData["pressure"] = pressure
                     storedData["hum_out"] = humidity
