@@ -57,13 +57,26 @@ DHT dht(DHTDATA, DHTTYPE);
 // Send payload data via RF
 //-------------------------------------------------------------------------------------------------
  static void rfwrite(){
+   #if defined(__AVR_ATtiny84__) 
      rf12_sleep(-1);              // Wake up RF module
      while (!rf12_canSend())
      rf12_recvDone();
      rf12_sendStart(0, &tinytx, sizeof tinytx); 
      rf12_sendWait(2);           // Wait for RF to finish sending while in standby mode
      rf12_sleep(0);              // Put RF module to sleep
-     return;
+#else
+  Serial.print("Pretend Send:\n temp, voltage, press, hum\n");
+  Serial.print(tinytx.temp);
+  Serial.print(" ");
+  Serial.print(tinytx.supplyV);	// Supply voltage
+  Serial.print(" ");
+  Serial.print(tinytx.pres);	// Pressure reading
+  Serial.print(" ");
+  Serial.print(tinytx.humidity);
+  Serial.print("\n");
+
+#endif
+return;
  }
 
 //--------------------------------------------------------------------------------------------------
@@ -96,7 +109,8 @@ void setup() {
   pinMode(LED_PIN, OUTPUT); // set power pin for BMP085 to output
   
   digitalWrite(BMP085_POWER, HIGH); // turn BMP085 sensor on
-  
+
+  Serial.write("Hello world\n");  
   Sleepy::loseSomeTime(50);
   psensor.getCalibData();
 
@@ -104,9 +118,10 @@ void setup() {
   digitalWrite(DHTPOWER, LOW);
   digitalWrite(LED_PIN, LOW); 
   
+  #if defined(__AVR_ATtiny84__) 
   rf12_initialize(myNodeID,freq,network); // Initialize RFM12 with settings defined above 
   rf12_sleep(0);                          // Put the RFM12 to sleep
-   
+  #endif 
   PRR = bit(PRTIM1); // only keep timer 0 going
   
   ADCSRA &= ~ bit(ADEN); bitSet(PRR, PRADC); // Disable the ADC to save power
@@ -115,17 +130,24 @@ int lastPressureRead = 0;
 int lastTempRead = 0;
 float lastHumidityRead = 0;
 
+#if defined(__AVR_ATtiny84__) 
+#define LOOPTIME 60000
+#else
+#define LOOPTIME 6000
+#endif
+
 void loop() {
 
+  delay(500);
   digitalWrite(LED_PIN, HIGH);
-  int sleepTimer = millis() + 60000; 
+  int sleepTimer = millis() + LOOPTIME; 
   boolean again = false;
   digitalWrite(BMP085_POWER, HIGH); // turn BMP085 sensor on
   digitalWrite(DHTPOWER, HIGH);
-  Sleepy::loseSomeTime(2000);
+  Sleepy::loseSomeTime(3000);
 
   dht.begin();
-  
+#if defined(__AVR_ATtiny84__) 
   do
   {
     again = false;
@@ -166,6 +188,8 @@ void loop() {
     lastPressureRead = tinytx.pres;
     
   }while(again);
+#endif
+
   float f;
   do
   {

@@ -128,24 +128,39 @@ void setup() {
 
 }
 
-void loop() {
-  
+int lastReadTemp = 0;
+static int getTemp()
+{
+  int temp = 0;
+  boolean readAgain = true;
   digitalWrite(ONE_WIRE_POWER, HIGH); // turn DS18B20 sensor on
 
-  //Sleepy::loseSomeTime(5); // Allow 5ms for the sensor to be ready
-  delay(5); // The above doesn't seem to work for everyone (why?)
- 
+  Sleepy::loseSomeTime(10); // The above doesn't seem to work for everyone (why?)
+
   sensors.begin(); //start up temp sensor
-  sensors.requestTemperatures(); // Get the temperature
-  tinytx.temp=(sensors.getTempCByIndex(0)*100); // Read first sensor and convert to integer, reversed at receiving end
-  
-  digitalWrite(ONE_WIRE_POWER, LOW); // turn DS18B20 off
+  do
+  {
+    sensors.requestTemperatures(); // Get the temperature
+    Sleepy::loseSomeTime(5);
+    temp = (int)(sensors.getTempCByIndex(0)*100);
+    /* sanity check the temperature. make sure it's not wildly different than last time */
+    if (temp < lastReadTemp + 1 && temp > lastReadTemp -1)
+    {
+      readAgain = false;
+    }
+    lastReadTemp = temp;
+  }while(readAgain);
+  digitalWrite(ONE_WIRE_POWER, LOW); // turn DS18B20 sensor off
+  return temp;
+}
+
+
+void loop() {
+  tinytx.getTemp() // Read first sensor and convert to integer, reversed at receiving end
   
   tinytx.supplyV = readVcc(); // Get supply voltage
 
-//Serial.write("going to call rfwrite\n");
   rfwrite(); // Send data via RF 
-  //Serial.write("rfwrite returned\n");
 
   Sleepy::loseSomeTime(60000); //JeeLabs power save function: enter low power mode for 60 seconds (valid range 16-65000 ms)
 
