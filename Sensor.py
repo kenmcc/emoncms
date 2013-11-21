@@ -102,7 +102,7 @@ class TempSwitchSensor(TempSensor):
             storedData = super(TempSwitchSensor, self).handleData(payload[0:4], storedData)
             if storedData is not None:
                    storedData["Switchstate"] = unpack("B", payload[4])[0]
-                   self.printData({"Temp":temp, "Batt":batt, "Swichstate":storedData["Switchstate"]})
+               self.printData({"Temp":storedData["Temp"], "Batt":storedData["Batt"], "Swichstate":storedData["Switchstate"]})
             return storedData
         
         
