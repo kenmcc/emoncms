@@ -1,7 +1,7 @@
 import logging
 from struct import *
 from emailer import *
-from datetime import *
+import datetime
 notifiedLowBatteries = []
 
 def checkBattery(node, battV):
@@ -107,7 +107,7 @@ class TempSwitchSensor(TempSensor):
             if storedData is not None:
                    storedData["Switchstate"] = unpack("B", payload[4])[0]
                    self.printData({"Switchstate":switchText})
-                   if datetime.now().time() > 23 and datetime.now().time() < 7:
+                   if datetime.datetime.now().time() > 23 and datetime.datetime.now().time() < 7:
                      switchText = "No Change"
                      if storedData["Switchstate"] == 0:
                       switchText = "Switch OFF"

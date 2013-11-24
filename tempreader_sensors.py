@@ -1,7 +1,7 @@
 import struct
 import urllib
 import os
-from datetime import *
+import datetime
 import sys
 import subprocess
 from emailer import *
