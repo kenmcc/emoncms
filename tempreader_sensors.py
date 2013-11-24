@@ -6,6 +6,9 @@ import sys
 import subprocess
 from emailer import *
 from Sensor import *
+import logging
+
+logging.basicConfig(filename='tempreaderpy.log',level=logging.DEBUG,format='%(asctime)s %(message)s')
 
 fd = os.open("/dev/rfm12b.0.1",  os.O_NONBLOCK|os.O_RDWR)
 
@@ -51,7 +54,7 @@ def populateCurrentData():
   YM="-".join([str(Y),str(M)])
   YMD="-".join([YM,str(D)])
   path = subprocess.check_output(["find "+fileBaseDir+" -name \"*.txt\" | sort | tail -n 1" ], shell=True)
-  print "Found this as the last entry" , path
+  logging.info("Found this as the last entry" , path)
   if os.path.exists(path):
     lastEntry= subprocess.check_output(['tail', '-1', path])
     if lastEntry is not None and len(lastEntry) > 10:
@@ -77,7 +80,7 @@ def writeDataToFile():
 
   with open(path, "a") as f:
     dataToWrite = ",".join([str(latestData["time"]),str(latestData["delay"]),str(latestData["hum_in"]),str(latestData["temp_in_avg"]),str(int(latestData["hum_out"])),str(latestData["temp_out"]),str(latestData["pressure"]),str(latestData["wind_avg"]),str(latestData["wind_gust"]),str(latestData["wind_dir"]),str(latestData["rain"])] )
-    print "writing", dataToWrite
+    logging.info("writing", dataToWrite)
     f.write(dataToWrite+"\n")        
 
 if __name__=="__main__":
@@ -93,14 +96,14 @@ if __name__=="__main__":
           payload = data[2:]
           nowtime = datetime.datetime.now()
           now= nowtime.strftime("%Y-%m-%d %H:%M:%S")
-          print "Node = ", node
+          loggin.info("Message from Node = ", node)
           if node in SENSORS:
               sensorName = SENSORS[node][0]
               sensorFunc = SENSORS[node][1]
               latestData = sensorFunc(sensorName, node).handleData(payload, latestData)
 
           else:
-              print "don't know what to do with node, len", node, datalen
+              logging.warning("don't know what to do with node, len", node, datalen)
           '''    
           #print now, node, len
           elif if node == 3 and datalen == 4:
@@ -135,7 +138,7 @@ if __name__=="__main__":
 
       lastruntime = datetime.datetime.strptime(latestData["time"], "%Y-%m-%d %H:%M:%S")
       if nowtime >= lastruntime + timeDelta:
-        print "time to update!"
+        logging.info("time to update!")
         latestData["time"] = now
         if len(latestData["temp_in_sensors"]) > 0:
             latestData["temp_in_avg"] = float(sum(latestData["temp_in_sensors"].values()))/len(latestData["temp_in_sensors"])  
