@@ -106,15 +106,15 @@ class TempSwitchSensor(TempSensor):
             storedData = super(TempSwitchSensor, self).handleData(payload[0:4], storedData)
             if storedData is not None:
                    storedData["Switchstate"] = unpack("B", payload[4])[0]
-                   if datetime.datetime.now().time().hour >= 21 and datetime.datetime.now().time().hour < 7:
-                     switchText = "No Change"
-                     if storedData["Switchstate"] == 0:
-                      switchText = "Switch OFF"
-                      sendEmail("SwitchOFF", "Switching Off Plug, temp is {0}".format(storedData["temp_in_sensors"][self.nodeId]), "ken.mccullagh@gmail.com")
-                     elif storedData["Switchstate"] == 1:
-                      switchText = "Switch ON"
-                      sendEmail("SwitchON", "Switching On Plug, temp is {0}".format(storedData["temp_in_sensors"][self.nodeId]), "ken.mccullagh@gmail.com")
-                     self.printData({"Switchstate":switchText})
+                   #if datetime.datetime.now().time().hour >= 21 and datetime.datetime.now().time().hour < 7:
+                   switchText = "No Change"
+                   if storedData["Switchstate"] == 0:
+                    switchText = "Switch OFF"
+                    sendEmail("SwitchOFF", "Switching Off Plug, temp is {0}".format(storedData["temp_in_sensors"][self.nodeId]), "ken.mccullagh@gmail.com")
+                   elif storedData["Switchstate"] == 1:
+                    switchText = "Switch ON"
+                    sendEmail("SwitchON", "Switching On Plug, temp is {0}".format(storedData["temp_in_sensors"][self.nodeId]), "ken.mccullagh@gmail.com")
+                   self.printData({"Switchstate":switchText})
             return storedData
         
         
