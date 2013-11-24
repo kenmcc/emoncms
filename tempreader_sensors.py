@@ -80,7 +80,7 @@ def writeDataToFile():
 
   with open(path, "a") as f:
     dataToWrite = ",".join([str(latestData["time"]),str(latestData["delay"]),str(latestData["hum_in"]),str(latestData["temp_in_avg"]),str(int(latestData["hum_out"])),str(latestData["temp_out"]),str(latestData["pressure"]),str(latestData["wind_avg"]),str(latestData["wind_gust"]),str(latestData["wind_dir"]),str(latestData["rain"])] )
-    logging.info("writing", dataToWrite)
+    logging.info("writing %s", dataToWrite)
     f.write(dataToWrite+"\n")        
 
 if __name__=="__main__":
@@ -96,14 +96,14 @@ if __name__=="__main__":
           payload = data[2:]
           nowtime = datetime.datetime.now()
           now= nowtime.strftime("%Y-%m-%d %H:%M:%S")
-          logging.info("Message from Node = ", node)
+          logging.info("Message from Node = %s ", node)
           if node in SENSORS:
               sensorName = SENSORS[node][0]
               sensorFunc = SENSORS[node][1]
               latestData = sensorFunc(sensorName, node).handleData(payload, latestData)
 
           else:
-              logging.warning("don't know what to do with node, len", node, datalen)
+              logging.warning("don't know what to do with node %s, len %s", node, datalen)
           '''    
           #print now, node, len
           elif if node == 3 and datalen == 4:
