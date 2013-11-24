@@ -1,5 +1,8 @@
+import logging
 from struct import *
+
 notifiedLowBatteries = []
+
 def checkBattery(node, battV):
   if battV < 2750 and node not in notifiedLowBatteries:
     sendEmail("Low Battery Warning", "Battery on node " + node + " is low: " + battV, "ken.mccullagh@gmail.com")
@@ -25,7 +28,7 @@ class Sensor(object):
         return storedData
         
     def printData(self, data):
-        print "Node:{0};{1}".format(self.nodeId, self.name), data 
+        logging.info("Node:%s, %s, %s",self.nodeId, self.name, data) 
 
     
 class UnKnown(Sensor):
@@ -69,7 +72,7 @@ class RainSensor(Sensor):
     def handleData(self, payload, storedData = None):
         rain,batt = unpack("hh", payload[0:4])
         checkBattery(self.nodeId, batt)
-        print "Rain Sensor; don't store", rain, batt
+        logging.info("Rain Sensor; don't store %s %s", rain, batt)
         #return {"Node":self.name, "Rain":rain, "Battery":batt}    
 
 class TempSensor(Sensor):
