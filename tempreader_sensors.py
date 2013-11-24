@@ -54,7 +54,7 @@ def populateCurrentData():
   YM="-".join([str(Y),str(M)])
   YMD="-".join([YM,str(D)])
   path = subprocess.check_output(["find "+fileBaseDir+" -name \"*.txt\" | sort | tail -n 1" ], shell=True)
-  logging.info("Found this as the last entry" , path)
+  logging.info("Found this as the last entry" + path)
   if os.path.exists(path):
     lastEntry= subprocess.check_output(['tail', '-1', path])
     if lastEntry is not None and len(lastEntry) > 10:
@@ -96,7 +96,7 @@ if __name__=="__main__":
           payload = data[2:]
           nowtime = datetime.datetime.now()
           now= nowtime.strftime("%Y-%m-%d %H:%M:%S")
-          loggin.info("Message from Node = ", node)
+          logging.info("Message from Node = ", node)
           if node in SENSORS:
               sensorName = SENSORS[node][0]
               sensorFunc = SENSORS[node][1]
