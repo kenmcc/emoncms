@@ -106,7 +106,7 @@ class TempSwitchSensor(TempSensor):
             storedData = super(TempSwitchSensor, self).handleData(payload[0:4], storedData)
             if storedData is not None:
                    storedData["Switchstate"] = unpack("B", payload[4])[0]
-                   if datetime.datetime.now().time() > 23 and datetime.datetime.now().time() < 7:
+                   if datetime.datetime.now().time().hour >= 0 and datetime.datetime.now().time().hour < 7:
                      switchText = "No Change"
                      if storedData["Switchstate"] == 0:
                       switchText = "Switch OFF"
