@@ -74,11 +74,11 @@ def populateCurrentData():
 
 def writeDataToFile():
   Y,M,D=getYearMonthDay()
-  YM="-".join([str(Y),str(M)])
-  YMD="-".join([YM,str(D)])
+  YM="-".join([str(Y),str(M).zfill(2)])
+  YMD="-".join([YM,str(D).zfill(2)])
   path=fileBaseDir+"/"+str(Y)+"/"+YM+"/"+YMD+".txt"
 
-  with open(path, "a") as f:
+  with open(path, "a+") as f:
     dataToWrite = ",".join([str(latestData["time"]),str(latestData["delay"]),str(latestData["hum_in"]),str(latestData["temp_in_avg"]),str(int(latestData["hum_out"])),str(latestData["temp_out"]),str(latestData["pressure"]),str(latestData["wind_avg"]),str(latestData["wind_gust"]),str(latestData["wind_dir"]),str(latestData["rain"])] )
     logging.info("writing %s", dataToWrite)
     f.write(dataToWrite+"\n")        
