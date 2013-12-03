@@ -17,6 +17,7 @@ timeDelta = datetime.timedelta(minutes=1)
 SENSORS = { 1:["COLLECTOR",None], 
             2:["WS:PTHum",PressureHumiditySensor],
             #3:["WS:WindRain",RainSensor],
+            9:["Relay", RelaySensor],
             10:["Kitchen", TempSensor],
             #11:["SittingRoom", TempSensor],
             21:["SadhbhBedroom",TempSwitchSensor], 
@@ -135,14 +136,14 @@ if __name__=="__main__":
           '''
           
               
-
-      lastruntime = datetime.datetime.strptime(latestData["time"], "%Y-%m-%d %H:%M:%S")
-      if nowtime >= lastruntime + timeDelta:
-        logging.info("time to update!")
-        latestData["time"] = now
-        if len(latestData["temp_in_sensors"]) > 0:
-            latestData["temp_in_avg"] = float(sum(latestData["temp_in_sensors"].values()))/len(latestData["temp_in_sensors"])  
-        writeDataToFile()
+      if latestData is not None:
+        lastruntime = datetime.datetime.strptime(latestData["time"], "%Y-%m-%d %H:%M:%S")
+        if nowtime >= lastruntime + timeDelta:
+          logging.info("time to update!")
+          latestData["time"] = now
+          if len(latestData["temp_in_sensors"]) > 0:
+              latestData["temp_in_avg"] = float(sum(latestData["temp_in_sensors"].values()))/len(latestData["temp_in_sensors"])  
+          writeDataToFile()
       
     #except:
     #print "Closing file"

@@ -45,6 +45,16 @@ class HumiditySensor(Sensor):
         checkBattery(self.nodeId, batt)
         ##return {"Node":self.name,"Humidity":humidity, "Battery":batt}
 
+class RelaySensor(Sensor):
+    def __init__(self, name, nodeId = None):
+        super(RelaySensor, self).__init__(name, nodeId)
+    
+    def handleData(self, payload, storedData = None):
+        batt = unpack("h", payload[0:2])[0]
+        checkBattery(self.nodeId, batt)
+        logging.info("Relay Sensor; battery =  %s", batt)
+        ##return {"Node":self.name,"Humidity":humidity, "Battery":batt}
+
 class PressureHumiditySensor(Sensor):
     def __init__(self, name, nodeId = None):
         super(PressureHumiditySensor, self).__init__(name, nodeId)
