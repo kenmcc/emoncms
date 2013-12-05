@@ -6,7 +6,7 @@ notifiedLowBatteries = []
 
 def checkBattery(node, battV):
   if battV < 2750 and node not in notifiedLowBatteries:
-    sendEmail("Low Battery Warning", "Battery on node " + node + " is low: " + battV, "ken.mccullagh@gmail.com")
+    sendEmail("Low Battery Warning", "Battery on node {0} is low {1}".format(node, battV), "ken.mccullagh@gmail.com")
     notifiedLowBatteries.append(node)
 
 def validateTemp(temp):
@@ -50,10 +50,15 @@ class RelaySensor(Sensor):
         super(RelaySensor, self).__init__(name, nodeId)
     
     def handleData(self, payload, storedData = None):
-        batt = unpack("h", payload[0:2])[0]
+        batt,lenOfPayload = unpack("hB", payload[0:3])
         checkBattery(self.nodeId, batt)
-        logging.info("Relay Sensor; battery =  %s", batt)
-        ##return {"Node":self.name,"Humidity":humidity, "Battery":batt}
+        logging.info("Relay Sensor; battery =  %s, %s", batt, lenOfPayload)
+	#unpackString = ""
+	#for i in range(0, lenOfPayload):
+          #unpackString += "B"
+	#innerData = unpack(unpackString, payload[3:3+lenOfPayload])
+	#print innerData
+        return storedData, payload[3:3+lenOfPayload]# innerData
 
 class PressureHumiditySensor(Sensor):
     def __init__(self, name, nodeId = None):

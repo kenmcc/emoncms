@@ -54,13 +54,25 @@ def populateCurrentData():
   Y,M,D=getYearMonthDay()
   YM="-".join([str(Y),str(M)])
   YMD="-".join([YM,str(D)])
+  
+  #path = subprocess.check_output(['find {0} -name "*.txt " | sort | tail -n 1'.format(fileBaseDir) ], shell=True)
   path = subprocess.check_output(["find "+fileBaseDir+" -name \"*.txt\" | sort | tail -n 1" ], shell=True)
+  path = path.replace("\n","")
   logging.info("Found this as the last entry" + path)
-  if os.path.exists(path):
-    lastEntry= subprocess.check_output(['tail', '-1', path])
-    if lastEntry is not None and len(lastEntry) > 10:
-      fields=lastEntry.split(",")
-      if len(fields) == 11:
+  found = False
+  if not os.path.isfile(path):
+    logging.info("ERROR!, path " + path +  " does not exist!")
+  else:
+    logging.info("Path exists")
+    data= subprocess.check_output(['tail', '-5', path])
+    for lastEntry in reversed(data.splitlines()):
+      #logging.info("Last Data", lastEntry)
+      if found:
+        logging.info("Found the last data")
+        break
+      if lastEntry is not None and len(lastEntry) > 10:
+       fields=lastEntry.split(",")
+       if len(fields) == 11:
         latestData["time"] = fields[0]
         latestData["delay"] = fields[1] 
         latestData["hum_in"] = fields[2] 
@@ -72,7 +84,11 @@ def populateCurrentData():
         latestData["wind_gust"] = fields[8] 
         latestData["wind_dir"] = fields[9] 
         latestData["rain"] = fields[10].strip().replace("\n", "")
+        found = True
+      else:
+         logging.info("Found incomplete entry")
 
+        
 def writeDataToFile():
   Y,M,D=getYearMonthDay()
   YM="-".join([str(Y),str(M).zfill(2)])
@@ -101,7 +117,16 @@ if __name__=="__main__":
           if node in SENSORS:
               sensorName = SENSORS[node][0]
               sensorFunc = SENSORS[node][1]
-              latestData = sensorFunc(sensorName, node).handleData(payload, latestData)
+ 	      if node != 9:
+                latestData = sensorFunc(sensorName, node).handleData(payload, latestData)
+              else:
+                latestData, nodeData = sensorFunc(sensorName, node).handleData(payload, latestData)
+		node,datalen = struct.unpack("BB",nodeData[:2])
+		payload = nodeData[2:]
+                sensorName = SENSORS[node][0]
+                sensorFunc = SENSORS[node][1]
+                latestData = sensorFunc(sensorName, node).handleData(payload, latestData)
+	
 
           else:
               logging.warning("don't know what to do with node %s, len %s", node, datalen)
@@ -136,14 +161,14 @@ if __name__=="__main__":
           '''
           
               
-      if latestData is not None:
-        lastruntime = datetime.datetime.strptime(latestData["time"], "%Y-%m-%d %H:%M:%S")
-        if nowtime >= lastruntime + timeDelta:
-          logging.info("time to update!")
-          latestData["time"] = now
-          if len(latestData["temp_in_sensors"]) > 0:
-              latestData["temp_in_avg"] = float(sum(latestData["temp_in_sensors"].values()))/len(latestData["temp_in_sensors"])  
-          writeDataToFile()
+      #if latestData is not None:
+      lastruntime = datetime.datetime.strptime(latestData["time"], "%Y-%m-%d %H:%M:%S")
+      if nowtime >= lastruntime + timeDelta:
+        logging.info("time to update!")
+        latestData["time"] = now
+        if len(latestData["temp_in_sensors"]) > 0:
+            latestData["temp_in_avg"] = float(sum(latestData["temp_in_sensors"].values()))/len(latestData["temp_in_sensors"])  
+        writeDataToFile()
       
     #except:
     #print "Closing file"
