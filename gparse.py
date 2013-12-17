@@ -77,12 +77,13 @@ def send_thankyou(mail_list, subject, body):
 
 def sendHelp(From):
   body = "Available Actions: " + ",".join(ACTIONS) +"\n"
-  body += "Available Switches: "+ ",".join(SWITCHES) + "\n"
+  body += "Available Switches: "+ ",".join(x for x in SWITCHES if x is not "") + "\n"
   send_thankyou([From,], "Unknown Command", body)
 
 def handleEmail(emailInfo):
   From = emailInfo['From']
-  Subject = emailInfo['Action'].upper()
+  rawSubject = emailInfo['Action'].upper()
+  Subject = rawSubject
   pattern = re.compile("mccullagh@gmail.com")
   if not pattern.search(From):
      return
@@ -98,7 +99,7 @@ def handleEmail(emailInfo):
         result = subprocess.check_call(["sudo", "./switcher", str(code), "24"])  
         if result == 0:
           resultString = "Success"
-        send_thankyou([From,], "Switch Result "+ resultString, "")
+        send_thankyou([From,], rawSubject +":"+ resultString, "Looks like it worked")
     else:
 	sendHelp(From)
   else:
